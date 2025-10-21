@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Approval AI - Neural Network Classifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .innovation-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .business-problem {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        .app-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 25px;
+        }
+
+        .section-row {
+            display: grid;
+            gap: 20px;
+        }
+
+        .section-row.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        .section-row.three-column {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .section-row.two-column {
+            grid-template-columns: 1fr 2fr;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-input-group {
+            margin-bottom: 20px;
+        }
+
+        .file-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.95rem;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="file"]:hover {
+            border-color: #3498db;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #219a52);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #219a52, #1e8449);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+
+        .btn-innovation {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+
+        .btn-innovation:hover {
+            background: linear-gradient(135deg, #8e44ad, #7d3c98);
+        }
+
+        .status {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .status.success {
+            background: #d1f2eb;
+            border-color: #a3e4d7;
+            color: #27ae60;
+        }
+
+        .status.error {
+            background: #fadbd8;
+            border-color: #f5b7b1;
+            color: #e74c3c;
+        }
+
+        .status.insight {
+            background: #e8f4fd;
+            border-color: #a3d5f7;
+            color: #2980b9;
+            border-left: 4px solid #3498db;
+        }
+
+        .slider-container {
+            margin: 20px 0;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 15px 0;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+        }
+
+        .metrics-display {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .metric {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            transition: transform 0.2s ease;
+        }
+
+        .metric:hover {
+            transform: scale(1.05);
+            border-color: #3498db;
+        }
+
+        .metric-value {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .data-preview {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin: 15px 0;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 700;
+            color: #2c3e50;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .insights-panel {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .insights-panel h3 {
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .insight-item {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 1024px) {
+            .section-row.three-column,
+            .section-row.two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-sections {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .innovation-badge {
+                position: static;
+                margin-bottom: 15px;
+            }
+        }
+
+        .feature-importance {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .charts-container {
+            margin: 20px 0;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .chart-btn {
+            background: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .chart-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
+        .chart-btn:hover {
+            background: #d5dbdb;
+        }
+
+        .chart-display {
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .prediction-results {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+
+        .preprocessing-details {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        .training-results {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="innovation-badge">🚀 AI Innovation</div>
+            <h1>🏦 Loan Approval AI</h1>
+            <div class="subtitle">Neural Network Binary Classifier - Complete ML Pipeline in Browser</div>
+            <div class="business-problem">
+                <strong>Business Application:</strong> This AI-powered loan approval system helps financial institutions automate credit decisioning, 
+                maintain consistent lending standards, and streamline loan origination processes. 
+                It's designed for banks, credit unions, and fintech companies to enhance operational efficiency 
+                while maintaining regulatory compliance and reducing human bias.
+            </div>
+        </header>
+
+        <div class="insights-panel">
+            <h3>🔍 Key Insights & Innovation</h3>
+            <div class="insight-item">🎯 <strong>Real-time Decision Making:</strong> Instant loan eligibility assessment based on financial data</div>
+            <div class="insight-item">📊 <strong>Interactive Feature Analysis:</strong> Understand which factors drive loan decisions</div>
+            <div class="insight-item">⚡ <strong>Browser-based AI:</strong> No servers needed - complete privacy & portability</div>
+        </div>
+
+        <div class="app-sections">
+            <!-- First Row - Full Width -->
+            <div class="section-row full-width">
+                <div class="section">
+                    <h2>📊 Data Load & EDA</h2>
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+                        <div>
+                            <div class="file-input-group">
+                                <label for="trainFile">📁 Training Data (CSV):</label>
+                                <input type="file" id="trainFile" accept=".csv">
+                            </div>
+                            <div class="file-input-group">
+                                <label for="testFile">📁 Test Data (CSV):</label>
+                                <input type="file" id="testFile" accept=".csv">
+                            </div>
+                            <button id="loadDataBtn" onclick="loadData()">
+                                📥 Load & Analyze Data
+                            </button>
+                            <div id="dataStatus" class="status"></div>
+                            <div class="status insight" id="edaInsights">
+                                Load data to see distribution analysis, missing values, and feature correlations
+                            </div>
+                            <div id="dataPreview" class="data-preview"></div>
+                        </div>
+                        <div>
+                            <div id="chartsContainer" class="charts-container">
+                                <div class="chart-controls" id="chartControls"></div>
+                                <div class="chart-display" id="chartDisplay">
+                                    <p>Load data to see distributions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Second Row - Three Columns -->
+            <div class="section-row three-column">
+                <!-- Preprocessing & Feature Engineering -->
+                <div class="section">
+                    <h2>🔧 Smart Preprocessing</h2>
+                    <button id="preprocessBtn" onclick="preprocessData()" disabled>
+                        ⚙️ Preprocess & Engineer Features
+                    </button>
+                    <div id="preprocessStatus" class="status"></div>
+                    <div id="preprocessingDetails" class="preprocessing-details">
+                        Preprocessing details will appear here after processing
+                    </div>
+                    <div id="featureInfo"></div>
+                </div>
+
+                <!-- Neural Network Model -->
+                <div class="section">
+                    <h2>🧠 Neural Network</h2>
+                    <button id="createModelBtn" onclick="createModel()" disabled>
+                        🏗️ Create Neural Network
+                    </button>
+                    
+                    <div class="file-input-group">
+                        <label for="modelFile">📁 Load Model:</label>
+                        <input type="file" id="modelFile" accept=".json,.bin">
+                    </div>
+                    <button id="loadModelBtn" onclick="loadModel()" class="btn-success">
+                        📂 Load Trained Model
+                    </button>
+                    
+                    <div id="modelStatus" class="status"></div>
+                    <div id="modelSummary"></div>
+                    <div class="status insight">
+                        <strong>Architecture:</strong> Single hidden layer (12 units) with dropout for regularization.
+                    </div>
+                </div>
+
+                <!-- Training & Optimization -->
+                <div class="section">
+                    <h2>🎯 Training & Tuning</h2>
+                    <button id="trainBtn" onclick="trainModel()" disabled>
+                        🚀 Train Model
+                    </button>
+                    <div id="trainingStatus" class="status"></div>
+                    <div id="trainingProgress"></div>
+                    <div class="status insight">
+                        <strong>Training Strategy:</strong> 20 epochs with 20% validation split.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Third Row - Two Columns (1/3 - 2/3) -->
+            <div class="section-row two-column">
+                <!-- Advanced Analytics -->
+                <div class="section">
+                    <h2>📈 Advanced Analytics</h2>
+                    <div class="slider-container">
+                        <label>🎚️ Decision Threshold: <span id="thresholdValue">0.5</span></label>
+                        <input type="range" id="thresholdSlider" min="0" max="1" step="0.01" value="0.5" oninput="updateThreshold(this.value)">
+                        <small>Adjust to balance precision vs recall based on business needs</small>
+                    </div>
+                    <div class="metrics-display">
+                        <div class="metric">
+                            <div class="metric-value" id="accuracy">-</div>
+                            <div class="metric-label">Accuracy</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="precision">-</div>
+                            <div class="metric-label">Precision</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="recall">-</div>
+                            <div class="metric-label">Recall</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="f1">-</div>
+                            <div class="metric-label">F1-Score</div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-importance" id="featureImportance">
+                        <strong>Feature Importance:</strong> Will be calculated after training
+                    </div>
+
+                    <button id="exportBtn" onclick="exportModel()" disabled class="btn-innovation">
+                        💾 Export Model
+                    </button>
+                </div>
+
+                <!-- Prediction Section -->
+                <div class="section">
+                    <h2>🔮 Predictions</h2>
+                    <button id="predictBtn" onclick="predictTestData()" disabled class="btn-success">
+                        🎯 Predict Test Data
+                    </button>
+                    
+                    <button id="downloadPredictionsBtn" onclick="downloadPredictions()" disabled class="btn-warning">
+                        📥 Download Predictions
+                    </button>
+                    
+                    <div id="predictionStatus" class="status"></div>
+                    
+                    <div id="predictionResults" class="prediction-results"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
